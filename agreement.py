@@ -16,22 +16,13 @@ def pk(ref, hyp, k=None, boundary=1):
     where the specified boundary value is used to mark the edge of a
     segmentation.
 
-    >>> '%.2f' % pk('0100'*100, '1'*400, 2)
+    >>> '%.2f' % pk([0, 1, 0, 0] * 100, [1] * 400, 2)
     '0.50'
-    >>> '%.2f' % pk('0100'*100, '0'*400, 2)
+    >>> '%.2f' % pk([0, 1, 0, 0] * 100, [0] * 400, 2)
     '0.50'
-    >>> '%.2f' % pk('0100'*100, '0100'*100, 2)
+    >>> '%.2f' % pk([0, 1, 0, 0] * 100, [0, 1, 0, 0] * 100, 2)
     '0.00'
 
-    :param ref: the reference segmentation
-    :type ref: str or list
-    :param hyp: the segmentation to evaluate
-    :type hyp: str or list
-    :param k: window size, if None, set to half of the average reference segment length
-    :type boundary: str or int or bool
-    :param boundary: boundary value
-    :type boundary: str or int or bool
-    :rtype: float
     """
     ref, hyp = ref.tolist(), hyp.tolist()
     if k is None:
@@ -52,9 +43,9 @@ def windowdiff(seg1, seg2, k, boundary=1, weighted=False):
     (e.g. "0", "1"), where the specified boundary value is used to
     mark the edge of a segmentation.
 
-        >>> s1 = "000100000010"
-        >>> s2 = "000010000100"
-        >>> s3 = "100000010000"
+        >>> s1 = [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0]
+        >>> s2 = [0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0]
+        >>> s3 = [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0]
         >>> '%.2f' % windowdiff(s1, s1, 3)
         '0.00'
         >>> '%.2f' % windowdiff(s1, s2, 3)
@@ -62,17 +53,6 @@ def windowdiff(seg1, seg2, k, boundary=1, weighted=False):
         >>> '%.2f' % windowdiff(s2, s3, 3)
         '0.80'
 
-    :param seg1: a segmentation
-    :type seg1: str or list
-    :param seg2: a segmentation
-    :type seg2: str or list
-    :param k: window width
-    :type k: int
-    :param boundary: boundary value
-    :type boundary: str or int or bool
-    :param weighted: use the weighted variant of windowdiff
-    :type weighted: boolean
-    :rtype: float
     """
     seg1, seg2 = seg1.tolist(), seg2.tolist()
     if len(seg1) != len(seg2):
