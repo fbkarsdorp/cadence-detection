@@ -24,15 +24,30 @@ def decode(label_trigram):
     return tuple(int(label) for label in label_trigram.split())
 
 
-FEATURES = {'pitch': [3, 4, 5, 6, 8],
+FEATURES20140503b = {'pitch': [3, 4, 5, 6, 8],
             'contour': [7, 9, 10, 11, 12, 13, 14, 33, 34],
             'rhythmfeatures': [16, 17, 18, 19, 28, 29, 30, 31, 32] + range(38,65),
             'textual': [22, 23, 24, 25, 26, 27, 35, 36, 37],
             'narmour': [16, 17, 18, 28, 29, 30, 31, 32, 33, 34],
             'context': [30, 35, 36, 37],
             'rest': [28, 29, 30],
-            'all': range(65)}
+            'indices' : [],
+            'all': range(65),
+            'alwaysexclude' : [0,1,2,15,20,21]}
 
+FEATURES20150202 = {'pitch': [3, 4, 5, 6, 8],
+            'contour': [7, 9, 10, 11, 12, 13, 14, 33, 34],
+            'rhythmfeatures': [16, 17, 18, 19, 28, 29, 30, 31, 32] + range(47,74),
+            'textual': [22, 23, 24, 25, 26, 27, 35, 36, 37, 38, 39, 40],
+            'narmour': [16, 17, 18, 28, 29, 30, 31, 32, 33, 34],
+            'context': [30, 35, 36, 37],
+            'rest': [28, 29, 30],
+            'indices' : [41, 42, 43, 44, 45, 46],
+            'all': range(74),
+            'all_20140503b' : range(38) + range(47,74),
+            'alwaysexclude' : [0,1,2,15,20,21,41,42,43,44,45,46]}
+
+FEATURES = FEATURES20150202
 
 def load_data(filename='data/trigram_dataset_note_20140503b.pkl', features='all'):
     with open(filename, 'r') as f:
@@ -43,12 +58,13 @@ def load_data(filename='data/trigram_dataset_note_20140503b.pkl', features='all'
         time_feats.append({timesig: 1.0})
     tr_timesigs_ = vectorizer.fit_transform(time_feats)
     tr_data = np.hstack((tr_data, tr_timesigs_))
-    feature_ixs = list(set(FEATURES[features]) - set([0,1,2,15,20,21]))
+    feature_ixs = list(set(FEATURES[features]) - set(FEATURES['alwaysexclude']))
     tr_data_sel = tr_data[:,feature_ixs]
+    tr_data_ixs = tr_data[:,FEATURES['indices']]
 
     features_per_id = defaultdict(list)
-    for features, label, (id, _) in izip(tr_data_sel, tr_tr_labels, tr_ids):
-        features_per_id[id].append((features, encode(label)))
+    for features, label, (id, _), ixs in izip(tr_data_sel, tr_tr_labels, tr_ids, tr_data_ixs):
+        features_per_id[id].append( (features, encode(label), ixs))
 
     return np.array(features_per_id.values()), features_per_id.keys()
 

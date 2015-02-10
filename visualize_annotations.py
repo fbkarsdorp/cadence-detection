@@ -27,6 +27,18 @@ def ensure_dir(f):
     if not os.path.exists(d):
         os.makedirs(d)
 
+def getAnnotationsFromFile(filename):
+	annotations = {} #keep annotations of different annotators separate
+	with open(filename, 'r') as infile:
+		for s in infile.readlines():
+			s = s.strip('\n')
+			fields = s.split('\t')
+			annid = fields[0]
+			annotations[annid] = []
+			for f in fields[1:]:
+				annotations[annid].append(int(f))
+	return annotations
+
 #filenames: array with filenames containing annotations
 def visualize_annotations(filenames, outputdir='./viz_ann/', annotators=None):
 	if not annotators:
@@ -39,16 +51,10 @@ def visualize_annotations(filenames, outputdir='./viz_ann/', annotators=None):
 	annotations = {} #annotations[ix][annid]
 	annids = set() #keep track which songs have been annotated across the input files
 	for ix, fn in enumerate(filenames):
-		annotations[ix] = {} #keep annotations of different annotators separate
-		with open(fn, 'r') as infile:
-			for s in infile.readlines():
-				s = s.strip('\n')
-				fields = s.split('\t')
-				annid = fields[0]
-				annotations[ix][annid] = []
-				annids.add(annid)
-				for f in fields[1:]:
-					annotations[ix][annid].append(int(f))
+		annotations[ix] = getAnnotationsFromFile(fn)
+		for annid in annotations[ix].keys():
+			annids.add(annid)
+	
 	#read songs
 	songs = {}
 	for annid in annids:
@@ -70,7 +76,8 @@ def visualize_annotations(filenames, outputdir='./viz_ann/', annotators=None):
 		shutil.move(out,outputdir+nlbid+'.pdf')
 
 if __name__ == '__main__':
-	filenames = [ 'annotations/jorn.txt', 'annotations/sanneke.txt', 'annotations/ellen.txt', 'annotations/ismir2014classifier.txt']
-	names = ['J', 'S', 'E', 'M']
-	visualize_annotations(filenames, annotators=names)
+	pass
+	#filenames = [ 'annotations/jorn.txt', 'annotations/sanneke.txt', 'annotations/ellen.txt', 'annotations/ismir2014classifier.txt']
+	#names = ['J', 'S', 'E', 'M']
+	#visualize_annotations(filenames, annotators=names)
 

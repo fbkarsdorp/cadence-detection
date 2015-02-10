@@ -163,3 +163,5 @@ def annotate_melody(melody, noRepeats=False):
             mel[n].endix = endix
 
     return pitch_ixs
+
+
