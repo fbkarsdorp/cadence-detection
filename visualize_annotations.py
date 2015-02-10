@@ -8,12 +8,17 @@ krnpath = '/Users/pvk/Documents/Eigenwerk/Projects/MeertensTuneCollections/data/
 
 #cd '~/rep/cadence-detection'
 
-#get ann_id-nlbid mapping
-nlbids = {} #keys are strings
+#get annid-nlbid mapping
+annids2nlbids = {} #keys are strings
 with open('ids_annotated.txt','r') as f:
 	for s in f.readlines():
 		s = s.strip('\n')
-		nlbids[s.split('\t')[1]] = s.split('\t')[2]
+		annids2nlbids[s.split('\t')[1]] = s.split('\t')[2]
+
+#also get nlbid-annid mapping
+nlbids2annids = {}
+for k,v in annids2nlbids.items():
+	nlbids2annids[v] = k
 
 #get representations of annotated songs (M: melody, T: text, TM: text and melody)
 representations = {}
@@ -35,8 +40,9 @@ def getAnnotationsFromFile(filename):
 			fields = s.split('\t')
 			annid = fields[0]
 			annotations[annid] = []
-			for f in fields[1:]:
-				annotations[annid].append(int(f))
+			if len(fields) > 1 and len(fields[1]) > 0:
+				for f in fields[1:]:
+					annotations[annid].append(int(f))
 	return annotations
 
 #filenames: array with filenames containing annotations
@@ -58,7 +64,7 @@ def visualize_annotations(filenames, outputdir='./viz_ann/', annotators=None):
 	#read songs
 	songs = {}
 	for annid in annids:
-		nlbid = nlbids[annid]
+		nlbid = annids2nlbids[annid]
 		songs[annid] = converter.parse(krnpath+nlbid+'.krn')
 		songs[annid].insert(metadata.Metadata())
 		songs[annid].metadata.title = annid+' - '+nlbid+' - '+representations[annid]
@@ -71,7 +77,7 @@ def visualize_annotations(filenames, outputdir='./viz_ann/', annotators=None):
 	ensure_dir(outputdir)
 	for annid in annids:
 		song = songs[annid]
-		nlbid = nlbids[annid]
+		nlbid = annids2nlbids[annid]
 		out = song.write('lily.pdf')
 		shutil.move(out,outputdir+nlbid+'.pdf')
 
