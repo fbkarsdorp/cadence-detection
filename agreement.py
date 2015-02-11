@@ -9,7 +9,7 @@ from statsmodels.stats.inter_rater import cohens_kappa
 from sklearn.metrics import confusion_matrix
 
 
-def pk(ref, hyp, k=None, boundary=1):
+def pk(ref, hyp, k=None, boundary=1, default=0.0):
     """
     Compute the Pk metric for a pair of segmentations A segmentation
     is any sequence over a vocabulary of two items (e.g. "0", "1"),
@@ -25,6 +25,10 @@ def pk(ref, hyp, k=None, boundary=1):
 
     """
     ref, hyp = ref.tolist(), hyp.tolist()
+    if ref.count(boundary) is 0:
+        ref, hyp = hyp, ref
+        if ref.count(boundary) is 0:
+            return 0.0
     if k is None:
         k = int(round(len(ref) / (ref.count(boundary) * 2.)))
 
@@ -34,9 +38,9 @@ def pk(ref, hyp, k=None, boundary=1):
         h = hyp[i:i+k].count(boundary) > 0
         if r != h:
            err += 1
-    return err / (len(ref)-k +1.)
+    return err / (len(ref)-k + 1.)
 
-def windowdiff(seg1, seg2, k, boundary=1, weighted=False):
+def windowdiff(seg1, seg2, k, boundary=1, weighted=False, default=0.0):
     """
     Compute the windowdiff score for a pair of segmentations.  A
     segmentation is any sequence over a vocabulary of two items
@@ -54,6 +58,7 @@ def windowdiff(seg1, seg2, k, boundary=1, weighted=False):
         '0.80'
 
     """
+    k = 1 if len(seg1) == 1 else k
     seg1, seg2 = seg1.tolist(), seg2.tolist()
     if len(seg1) != len(seg2):
         raise ValueError("Segmentations have unequal length")
@@ -79,7 +84,14 @@ def pairwise_evaluation(fn, *annotations):
     return sum(scores) / len(scores)
 
 def pairwise_kappa(annotations):
-    return pairwise_evaluation(lambda a, b: cohens_kappa(confusion_matrix(a, b)).kappa, *annotations)
+    def _cohen(a, b):
+        if a.shape[0] == 1 and b.shape[0] == 1:
+            return 1
+        cm = confusion_matrix(a, b)
+        if cm.sum(axis=1).min() == 0:
+            return 0
+        return cohens_kappa(cm).kappa
+    return pairwise_evaluation(_cohen, *annotations)
 
 def pairwise_pk(annotations):
     return pairwise_evaluation(pk, *annotations)
@@ -90,10 +102,12 @@ def pairwise_windowdiff(annotations, k=3):
 if __name__ == '__main__':
     annotations = defaultdict(lambda: defaultdict(list))
     for a_file in glob.glob("annotations/*.txt"):
+        print a_file
         annotator = a_file.split("/")[-1].replace(".txt", "")
         for line in open(a_file):
-            idnumber, cadences = line.strip().split("\t", 1)
-            annotations[idnumber][annotator] = map(int, cadences.split("\t"))
+            fields = line.strip().split("\t")
+            idnumber, cadences = fields[0], fields[1:] if len(fields) > 1 else []
+            annotations[idnumber][annotator] = map(int, cadences)
 
     k_scores, pk_scores, wd_scores = [], [], []
     for idnumber, cadences in annotations.items():
